@@ -107,24 +107,18 @@
     },
     methods: {
       scroll: debounce(function () {
-        console.log('scroll')
         if (!this.onInfinite) return
-        var
-          scroller = this.$refs.scroller,
-          loader = this.$refs.loader
+        var scroller = this.$refs.scroller,
+            loader   = this.$refs.loader
         if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) {
           return
         }
-        console.log(scroller.clientHeight, loader.offsetTop)
         if (scroller.clientHeight > loader.offsetTop) {
-          console.log('111111')
           this.loadingState = 2
           this.onInfinite(this.finishInfinite)
           this.scroll()
         } else {
-          console.log('222222')
           if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
-            console.log('333333')
             this.loadingState = 2
             this.onInfinite(this.finishInfinite)
           }
@@ -142,7 +136,6 @@
           default:
             state = 1
         }
-        console.log(hideSpinner, state)
         this.loadingState = state
       },
       reload () {
