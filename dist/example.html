@@ -4,19 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no">
   <script src="https://unpkg.com/vue@2.2.6/dist/vue.min.js"></script>
-  <script src="../vue-pull-infinite-scroller.min.js"></script>
+  <script src="./vue-pull-infinite-scroller.min.js"></script>
   <title>Vue Pull Infinite Scroller</title>
   <style>
     html, body {
       margin: 0;
-      font-size: 50px;
+      font-size: 16px;
     }
 
     * {
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
     }
-
     .row {
       width: 100%;
       height: 50px;
@@ -27,17 +26,14 @@
       color: #444;
       background-color: #fff;
     }
-
     .grey-bg {
       background-color: #eee;
     }
-
   </style>
 </head>
 <body>
 <div id="app">
-  <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！"
-                          style="height: calc(100vh);">
+  <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！" style="height: calc(100vh);">
     <div v-for="(item, index) in items" class="row" :class="{'grey-bg': index % 2 == 0}">
       {{ item }}
     </div>
@@ -46,26 +42,23 @@
 <script>
   new Vue({
     el: '#app',
-
     data: {
       items: []
     },
-
     mounted: function () {
       for (var i = 1; i <= 2; i++) {
-        this.items.push(i + ' - keep walking, be 2 with you.');
+        this.items.push(i + ' - keep walking, be 2 with you.')
       }
-      this.top = 1;
-      this.bottom = 2;
+      this.top = 1
+      this.bottom = 2
     },
-
     methods: {
       refresh: function (done) {
         var self = this
         setTimeout(function () {
           self.items.splice(2, self.items.length - 2)
           self.bottom = 2
-          done();
+          done()
         }, 500)
       },
       infinite: function (done) {
@@ -77,11 +70,11 @@
             return
           }
           if (self.bottom < 20) {
-            var start = self.bottom + 1;
+            var start = self.bottom + 1
             for (var i = start; i < start + 2; i++) {
-              self.items.push(i + ' - keep walking, be 2 with you.');
+              self.items.push(i + ' - keep walking, be 2 with you.')
             }
-            self.bottom = self.bottom + 2;
+            self.bottom = self.bottom + 2
             done()
           } else {
             done('end')
@@ -90,7 +83,7 @@
         }, 300)
       }
     }
-  });
+  })
 </script>
 </body>
 </html>
