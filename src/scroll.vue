@@ -19,7 +19,7 @@
     <div class="scroll-box" ref="box" :style="diff ? {transform: `translate3d(0, ${diff}px, 0)` } : ''">
       <div v-if="topLoadMethod" class="refresh" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
         <svg class="icon" :class="{'icon-arrow': state === 'trigger', 'icon-loading': state === 'loading' }">
-          <use :xlink:href="iconLink"></use>
+          <use :xlink:href="icon"></use>
         </svg>
         {{refreshText}}
       </div>
@@ -72,22 +72,6 @@
   }
 
   export default {
-    data () {
-      return {
-        loadingState: 1, // 0: stop, 1: loading, 2: stopping loading ,3:loading error
-        diff: 0,
-        beforeDiff: 0,
-        topLoadMethod: false,
-        topBlockHeight: 50,
-        startY: 0,
-        startScrollTop: 0,
-        distance: 0,
-        refreshText: '下拉刷新',
-        state: '',
-        triggerDistance: 70,
-        parentnode: false,
-      }
-    },
     props: {
       onRefresh: Function,
       onInfinite: Function,
@@ -96,16 +80,20 @@
         default: '没有更多数据'
       },
     },
-    computed: {
-      iconLink () {
-        switch (this.state) {
-          case 'loading':
-          case 'finish':
-            return '#icon-' + this.state
-        }
-        // case 'trigger':
-        // case 'pull':
-        return '#icon-pull'
+    data () {
+      return {
+        loadingState: 1, // 0: stop, 1: loading, 2: stopping loading ,3:loading error
+        beforeDiff: 0,
+        diff: 0,
+        topLoadMethod: false,
+        topBlockHeight: 50,
+        startY: 0,
+        startScrollTop: 0,
+        distance: 0,
+        refreshText: '下拉刷新',
+        triggerDistance: 70,
+        parentnode: false,
+        action: '',
       }
     },
     mounted () {
@@ -138,7 +126,6 @@
         }
       }, 300),
       finishInfinite (hideSpinner) {
-        console.log(hideSpinner)
         let state = 1
         switch (hideSpinner) {
           case 'end':
@@ -150,6 +137,7 @@
           default:
             state = 1
         }
+        console.log(hideSpinner, state)
         this.loadingState = state
       },
       reload () {
@@ -181,7 +169,7 @@
         this.startY = event.touches[0].clientY
         this.beforeDiff = this.diff
         this.startScrollTop = this.$refs.scroller.scrollTop
-        this.state = 'pull'
+        this.action = 'pull'
         this.refreshText = '下拉刷新'
         this.topLoadMethod = false
       },
@@ -198,10 +186,10 @@
           event.stopPropagation()
           this.diff = this.distance
           if (this.distance > this.triggerDistance) {
-            this.state = 'trigger'
+            this.action = 'trigger'
             this.refreshText = '放手刷新'
           } else {
-            this.state = 'pull'
+            this.action = 'pull'
             this.refreshText = '下拉刷新'
           }
         }
@@ -211,11 +199,11 @@
           if (this.diff < this.triggerDistance) {
             this.scrollTo(0)
           } else {
-            this.state = 'loading'
+            this.action = 'loading'
             this.scrollTo(this.topBlockHeight)
             this.onRefresh(() => {
               this.refreshText = '加载完成'
-              this.state = 'finish'
+              this.action = 'finish'
               setTimeout(() => {
                 this.scrollTo(0)
                 this.reload()
@@ -227,7 +215,18 @@
         }
       }
     },
-    components: {}
+    computed: {
+      icon () {
+        switch (this.action) {
+          case 'loading':
+          case 'finish':
+            return '#icon-' + this.action
+        }
+        // case 'trigger':
+        // case 'pull':
+        return '#icon-pull'
+      }
+    }
   }
 </script>
 
