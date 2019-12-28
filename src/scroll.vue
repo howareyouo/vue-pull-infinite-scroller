@@ -1,5 +1,5 @@
 <template>
-  <div class="scroller" ref="scroller" @scroll="scroll($event.target)">
+  <div class="scroller" ref="scroller" @scroll="scroll">
     <svg style="display: none">
       <symbol id="icon-finish" viewBox="0 0 1024 1024">
         <path
@@ -28,7 +28,7 @@
       </div>
       <div class="loader" ref="loader" v-if="onInfinite">
         <template v-if="loadingState === 0">加载完成</template>
-        <p v-else-if="loadingState === 3" @click="(loadingState = 1) && init()">加载失败，点击重试</p>
+        <p v-else-if="loadingState === 3" @click="(loadingState = 1) && scroll()">加载失败，点击重试</p>
         <template v-else>
           <svg>
             <use xlink:href="#icon-loading"></use>
@@ -82,7 +82,7 @@
     },
     data () {
       return {
-        loadingState: 1, // 0: stop, 1: loading, 2: stopping loading ,3:loading error
+        loadingState: 1, // 0: stop, 1: loading, 2: stopping loading, 3:loading error
         beforeDiff: 0,
         diff: 0,
         topLoadMethod: false,
@@ -97,7 +97,7 @@
       }
     },
     mounted () {
-      this.init()
+      this.scroll()
       this.topLoadMethod = !!this.onRefresh
       if (this.topLoadMethod) {
         this.$refs.box.addEventListener('touchstart', this.touchstart)
@@ -106,7 +106,8 @@
       }
     },
     methods: {
-      init: debounce(function () {
+      scroll: debounce(function () {
+        console.log('scroll')
         if (!this.onInfinite) return
         var
           scroller = this.$refs.scroller,
@@ -114,12 +115,16 @@
         if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) {
           return
         }
+        console.log(scroller.clientHeight, loader.offsetTop)
         if (scroller.clientHeight > loader.offsetTop) {
+          console.log('111111')
           this.loadingState = 2
           this.onInfinite(this.finishInfinite)
-          this.init()
+          this.scroll()
         } else {
+          console.log('222222')
           if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
+            console.log('333333')
             this.loadingState = 2
             this.onInfinite(this.finishInfinite)
           }
@@ -143,10 +148,7 @@
       reload () {
         this.loadingState = 1
         this.$refs.scroller.scrollTop = 0
-        this.init()
-      },
-      scroll () {
-        this.init()
+        this.scroll()
       },
       scrollTo (y, duration = 200) {
         this.$refs.box.style.transition = `${duration}ms`
@@ -234,6 +236,7 @@
   .scroller {
     -webkit-overflow-scrolling: touch;
     position: absolute;
+    overflow-y: auto;
     bottom: 0;
     right: 0;
     left: 0;
