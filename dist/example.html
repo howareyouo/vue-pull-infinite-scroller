@@ -26,9 +26,9 @@
 </head>
 <body>
 <div id="app">
-  <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！">
+  <infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！">
     <div v-for="(item, index) in items" class="row" :class="{'grey': index % 2}">{{item}}</div>
-  </pull-infinite-scroller>
+  </infinite-scroller>
 </div>
 <script>
   new Vue({
