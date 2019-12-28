@@ -1,4 +1,4 @@
-import Scroller from './components/scroll.vue'
+import Scroller from './scroll.vue'
 
 function install (Vue) {
   if (install.installed) return
@@ -14,5 +14,3 @@ const VuePullInfiniteScroller = {
 if (typeof window !== undefined && window.Vue) {
   window.Vue.use(VuePullInfiniteScroller)
 }
-
-export default VuePullInfiniteScroller

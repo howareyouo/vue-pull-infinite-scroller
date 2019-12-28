@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no">
-  <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/vue/dist/vue.min.js"></script>
   <script src="./vue-infinite-scroller.min.js"></script>
   <title>Vue Pull Infinite Scroller</title>
   <style>
@@ -20,7 +20,7 @@
       color: #444;
       background-color: #fff;
     }
-    .grey-bg {
+    .grey {
       background-color: #eee;
     }
   </style>
@@ -28,7 +28,7 @@
 <body>
 <div id="app">
   <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！" style="height: calc(100vh);">
-    <div v-for="(item, index) in items" class="row" :class="{'grey-bg': index % 2}">{{item}}</div>
+    <div v-for="(item, index) in items" class="row" :class="{'grey': index % 2}">{{item}}</div>
   </pull-infinite-scroller>
 </div>
 <script>
@@ -59,6 +59,7 @@
         setTimeout(function () {
           if (random > .85) {
             done('error')
+            console.log('error')
             return
           }
           if (self.bottom < 20) {
@@ -68,8 +69,10 @@
             }
             self.bottom = self.bottom + 2
             done()
+            console.log('done')
           } else {
             done('end')
+            console.log('end')
           }
 
         }, 300)

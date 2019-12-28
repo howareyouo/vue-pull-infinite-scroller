@@ -17,7 +17,7 @@
       </symbol>
     </svg>
     <div class="scroll-box" ref="box" :style="diff?{transform: `translate3d(0, ${diff}px, 0)` }:''">
-      <div v-if="topLoadMethod" class="action-block" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
+      <div v-if="topLoadMethod" class="actions" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
         <svg class="icon" :class="{'icon-arrow': state === 'trigger', 'icon-loading': state === 'loading' }" aria-hidden="true">
           <use :xlink:href="iconLink"></use>
         </svg>
@@ -28,7 +28,7 @@
       </div>
       <div class="load" ref="load" v-if="onInfinite">
         <p v-if="loadingState === 0">加载完成</p>
-        <p v-else-if="loadingState === 3" @click="(loadingState = 1) && deInit()">加载失败，点击重试</p>
+        <p v-else-if="loadingState === 3" @click="(loadingState = 1) && init()">加载失败，点击重试</p>
         <p v-else>
           <svg class="load-icon" fill="#555" viewBox="0 0 64 64">
             <use xlink:href="#icon-loading"></use>
@@ -39,7 +39,7 @@
     </div>
   </div>
 </template>
-<style lang="css" scoped>
+<style lang="css">
   .scrolls {
     -webkit-overflow-scrolling: touch;
     position: absolute;
@@ -52,7 +52,7 @@
   .scrolls .scroll-box {
     width: 100%;
   }
-  .action-block {
+  .actions {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -60,7 +60,7 @@
     line-height: 3rem;
     width: 100%;
   }
-  .action-block svg {
+  .actions svg {
     display: block;
     margin-right: .5rem;
     width: 1rem;
@@ -68,7 +68,7 @@
     fill: #555;
     will-change: transform;
   }
-  .action-block svg.icon-arrow {
+  .actions svg.icon-arrow {
     transition: .2s;
     transform: rotate(180deg);
   }
@@ -161,7 +161,7 @@
       }
     },
     mounted () {
-      this.deInit()
+      this.init()
       this.topLoadMethod = !!this.onRefresh
       if (this.topLoadMethod) {
         this.$refs.box.addEventListener('touchstart', this.touchstart)
@@ -170,13 +170,13 @@
       }
     },
     methods: {
-      deInit: debounce(function () {
+      init: debounce(function () {
         if (!this.onInfinite) return
         if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) return
         if (this.$refs.scroller.clientHeight > this.$refs.load.offsetTop) {
           this.loadingState = 2
           this.onInfinite(this.finishInfinite)
-          this.deInit()
+          this.init()
         } else {
           if ((this.$refs.scroller.scrollTop + this.$refs.scroller.clientHeight - this.$refs.load.clientHeight) > (this.$refs.load.offsetTop - 50)) {
             this.loadingState = 2
@@ -201,10 +201,10 @@
       reload () {
         this.loadingState = 1
         this.$refs.scroller.scrollTop = 0
-        this.deInit()
+        this.init()
       },
       scroll () {
-        this.deInit()
+        this.init()
       },
       scrollTo (y, duration = 200) {
         this.$refs.box.style.transition = `${duration}ms`
