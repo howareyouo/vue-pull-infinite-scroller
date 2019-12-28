@@ -1,5 +1,5 @@
 <template>
-  <div class="scrolls" ref="scroller" @scroll="scroll($event.target)">
+  <div class="scroller" ref="scroller" @scroll="scroll($event.target)">
     <svg aria-hidden="true" style="display: none">
       <symbol id="icon-finish" viewBox="0 0 1024 1024">
         <path
@@ -16,7 +16,7 @@
             d="M793.036 736.931l-248.058 248.058c-4.425 5.631-10.156 10.054-16.992 12.567-0.502 0.1-0.803 0.202-1.106 0.202-4.022 1.809-8.446 2.411-12.87 2.614-0.602 0-1.307 0.502-1.909 0.502-1.206 0-2.213-0.803-3.419-0.803-2.614-0.202-5.228-0.803-7.844-1.71-3.116-0.803-5.934-2.113-8.746-3.518-1.71-0.906-3.317-2.114-4.928-3.317-1.409-1.106-3.219-1.609-4.525-3.116l-251.575-251.475c-16.287-16.19-16.287-42.531 0-58.522 16.090-16.19 42.433-16.19 58.722 0l180.99 180.887v-403.406c0-23.127 18.803-42.131 41.929-42.131s41.929 18.905 41.929 42.131v402.098l179.783-179.581c15.987-16.191 42.433-16.19 58.621 0 16.090 15.987 16.090 42.331 0 58.522zM512.402 302.354c-23.127 0-41.929-18.803-41.929-41.929 0-23.026 18.703-41.828 41.929-41.828 23.227 0 41.929 18.803 41.929 41.828 0.1 23.227-18.703 41.929-41.929 41.929zM512.402 106.885c-23.127 0-41.929-18.703-41.929-41.929 0-23.026 18.703-41.828 41.929-41.828 23.227 0 41.929 18.803 41.929 41.828 0.1 23.227-18.703 41.929-41.929 41.929z"></path>
       </symbol>
     </svg>
-    <div class="scroll-box" ref="box" :style="diff?{transform: `translate3d(0, ${diff}px, 0)` }:''">
+    <div class="scroll-box" ref="box" :style="diff ? {transform: `translate3d(0, ${diff}px, 0)` } : ''">
       <div v-if="topLoadMethod" class="actions" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
         <svg class="icon" :class="{'icon-arrow': state === 'trigger', 'icon-loading': state === 'loading' }" aria-hidden="true">
           <use :xlink:href="iconLink"></use>
@@ -26,72 +26,20 @@
       <div class="scroll-container">
         <slot></slot>
       </div>
-      <div class="load" ref="load" v-if="onInfinite">
+      <div class="loader" ref="loader" v-if="onInfinite">
         <p v-if="loadingState === 0">加载完成</p>
         <p v-else-if="loadingState === 3" @click="(loadingState = 1) && init()">加载失败，点击重试</p>
         <p v-else>
-          <svg class="load-icon" fill="#555" viewBox="0 0 64 64">
+          <svg>
             <use xlink:href="#icon-loading"></use>
           </svg>
-          <span>加载中...</span>
+          加载中...
         </p>
       </div>
     </div>
   </div>
 </template>
-<style lang="css">
-  .scrolls {
-    -webkit-overflow-scrolling: touch;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1;
-  }
-  .scrolls .scroll-box {
-    width: 100%;
-  }
-  .actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    line-height: 3rem;
-    width: 100%;
-  }
-  .actions svg {
-    display: block;
-    margin-right: .5rem;
-    width: 1rem;
-    height: 1rem;
-    fill: #555;
-    will-change: transform;
-  }
-  .actions svg.icon-arrow {
-    transition: .2s;
-    transform: rotate(180deg);
-  }
-  .load {
-    text-align: center;
-  }
-  .load p {
-    color: #555;
-    line-height: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-  }
-  .load-icon {
-    display: block;
-    margin-right: .5rem;
-    width: 1rem;
-    height: 1rem;
-    fill: #555;
-    will-change: transform;
-  }
-</style>
+
 <script>
   function debounce (func, wait, immediate) {
     var timeout, args, context, timestamp, result
@@ -172,31 +120,37 @@
     methods: {
       init: debounce(function () {
         if (!this.onInfinite) return
-        if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) return
-        if (this.$refs.scroller.clientHeight > this.$refs.load.offsetTop) {
+        var
+          scroller = this.$refs.scroller,
+          loader = this.$refs.loader
+        if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) {
+          return
+        }
+        if (scroller.clientHeight > loader.offsetTop) {
           this.loadingState = 2
           this.onInfinite(this.finishInfinite)
           this.init()
         } else {
-          if ((this.$refs.scroller.scrollTop + this.$refs.scroller.clientHeight - this.$refs.load.clientHeight) > (this.$refs.load.offsetTop - 50)) {
+          if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
             this.loadingState = 2
             this.onInfinite(this.finishInfinite)
           }
         }
       }, 300),
       finishInfinite (hideSpinner) {
-        let states = 1
+        console.log(hideSpinner)
+        let state = 1
         switch (hideSpinner) {
           case 'end':
-            states = 0
+            state = 0
             break
           case 'error':
-            states = 3
+            state = 3
             break
           default:
-            states = 1
+            state = 1
         }
-        this.loadingState = states
+        this.loadingState = state
       },
       reload () {
         this.loadingState = 1
@@ -276,3 +230,41 @@
     components: {}
   }
 </script>
+
+<style lang="css">
+  .scroller {
+    -webkit-overflow-scrolling: touch;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+  .scroller .scroll-box {
+    width: 100%;
+  }
+  .actions, .loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 3rem;
+  }
+  .actions {
+    position: absolute;
+    width: 100%;
+  }
+  .scroller svg {
+    will-change: transform;
+    margin-right: .5rem;
+    height: 1rem;
+    width: 1rem;
+    fill: #555;
+  }
+  .actions svg.icon-arrow {
+    transform: rotate(180deg);
+    transition: .2s;
+  }
+  .loader {
+    color: #555;
+  }
+</style>

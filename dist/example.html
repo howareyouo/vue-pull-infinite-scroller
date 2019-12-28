@@ -27,7 +27,7 @@
 </head>
 <body>
 <div id="app">
-  <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！" style="height: calc(100vh);">
+  <pull-infinite-scroller :on-refresh="refresh" :on-infinite="infinite" no-data-text="木有数据啦！">
     <div v-for="(item, index) in items" class="row" :class="{'grey': index % 2}">{{item}}</div>
   </pull-infinite-scroller>
 </div>
@@ -41,40 +41,30 @@
       for (var i = 1; i <= 2; i++) {
         this.items.push(i + ' - keep walking, be 2 with you.')
       }
-      this.top = 1
-      this.bottom = 2
     },
     methods: {
       refresh: function (done) {
         var self = this
         setTimeout(function () {
           self.items.splice(2, self.items.length - 2)
-          self.bottom = 2
           done()
         }, 500)
       },
       infinite: function (done) {
-        var self = this
         var random = Math.random()
+        var self = this
         setTimeout(function () {
           if (random > .85) {
-            done('error')
-            console.log('error')
-            return
+            return done('error')
           }
-          if (self.bottom < 20) {
-            var start = self.bottom + 1
-            for (var i = start; i < start + 2; i++) {
-              self.items.push(i + ' - keep walking, be 2 with you.')
-            }
-            self.bottom = self.bottom + 2
-            done()
-            console.log('done')
-          } else {
-            done('end')
-            console.log('end')
+          if (self.bottom >= 20) {
+            return done('end')
           }
-
+          var start = self.items.length
+          for (var i = start; i < start + 2; i++) {
+            self.items.push(i + ' - keep walking, be 2 with you.')
+          }
+          done()
         }, 300)
       }
     }
