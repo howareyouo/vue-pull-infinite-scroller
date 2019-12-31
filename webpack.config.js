@@ -1,6 +1,8 @@
 var path = require('path')
 var webpack = require('webpack')
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+var OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+var VueLoaderPlugin = require('vue-loader/lib/plugin')
+var UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
   entry: './src/index.js',
@@ -9,9 +11,22 @@ module.exports = {
     publicPath: '/dist/',
     filename: 'build.js'
   },
+
   optimization: {
     usedExports: true,
-    minimize: true //Update this to true or false
+    minimize: true, //Update this to true or false
+    minimizer: [
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true // set to true if you want JS source maps
+      }),
+      new OptimizeCSSAssetsPlugin({
+        cssProcessor: require('cssnano'),
+        cssProcessorOptions: { discardComments: { removeAll: true } },
+        canPrint: true
+      })
+    ]
   },
   module: {
     rules: [
@@ -53,10 +68,6 @@ module.exports = {
       'vue$': 'vue/dist/vue.common.js',
       'vue-scroller': path.resolve(__dirname, './src')
     }
-  },
-  devServer: {
-    historyApiFallback: true,
-    noInfo: true
   }
 }
 

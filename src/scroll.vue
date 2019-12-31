@@ -225,7 +225,7 @@
   }
 </script>
 
-<style lang="css">
+<style>
   .scroller {
     -webkit-overflow-scrolling: touch;
     position: absolute;
@@ -242,7 +242,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 3rem;
+    line-height: 3.5rem;
     color: #666;
   }
   .refresh {
