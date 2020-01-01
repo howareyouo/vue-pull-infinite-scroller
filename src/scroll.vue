@@ -112,14 +112,11 @@ export default {
           loader   = this.$refs.loader
       // 内容高度 > 加载更多顶部，触发加载事件
       if (scroller.clientHeight > loader.offsetTop) {
-        console.log('if')
         this.loading = 2
         this.onInfinite(this.finishInfinite)
         this.scroll()
       } else {
-        console.log('else')
         if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
-          console.log('else if')
           this.loading = 2
           this.onInfinite(this.finishInfinite)
         }
