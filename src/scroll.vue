@@ -16,9 +16,9 @@
             d="M793.036 736.931l-248.058 248.058c-4.425 5.631-10.156 10.054-16.992 12.567-0.502 0.1-0.803 0.202-1.106 0.202-4.022 1.809-8.446 2.411-12.87 2.614-0.602 0-1.307 0.502-1.909 0.502-1.206 0-2.213-0.803-3.419-0.803-2.614-0.202-5.228-0.803-7.844-1.71-3.116-0.803-5.934-2.113-8.746-3.518-1.71-0.906-3.317-2.114-4.928-3.317-1.409-1.106-3.219-1.609-4.525-3.116l-251.575-251.475c-16.287-16.19-16.287-42.531 0-58.522 16.090-16.19 42.433-16.19 58.722 0l180.99 180.887v-403.406c0-23.127 18.803-42.131 41.929-42.131s41.929 18.905 41.929 42.131v402.098l179.783-179.581c15.987-16.191 42.433-16.19 58.621 0 16.090 15.987 16.090 42.331 0 58.522zM512.402 302.354c-23.127 0-41.929-18.803-41.929-41.929 0-23.026 18.703-41.828 41.929-41.828 23.227 0 41.929 18.803 41.929 41.828 0.1 23.227-18.703 41.929-41.929 41.929zM512.402 106.885c-23.127 0-41.929-18.703-41.929-41.929 0-23.026 18.703-41.828 41.929-41.828 23.227 0 41.929 18.803 41.929 41.828 0.1 23.227-18.703 41.929-41.929 41.929z"/>
       </symbol>
     </svg>
-    <div class="scroll-box" ref="box" :style="diff ? {transform: `translate3d(0, ${diff}px, 0)` } : ''">
-      <div v-if="topLoadMethod" class="refresh" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
-        <svg class="icon" :class="{'icon-arrow': state === 'trigger', 'icon-loading': state === 'loading' }">
+    <div class="scroll-box" ref="box" :style="diff ? {transform: `translateY(${diff}px)`} : ''">
+      <div v-if="refreshable" class="refresh" :style="{height: `${topBlockHeight}px`,top: `-${topBlockHeight}px`}">
+        <svg class="icon" :class="{'icon-arrow': state == 'trigger', 'icon-loading': state == 'loading' }">
           <use :xlink:href="icon"></use>
         </svg>
         {{refreshText}}
@@ -27,8 +27,8 @@
         <slot></slot>
       </div>
       <div class="loader" ref="loader" v-if="onInfinite">
-        <template v-if="loadingState === 0">加载完成</template>
-        <p v-else-if="loadingState === 3" @click="(loadingState = 1) && scroll()">加载失败，点击重试</p>
+        <template v-if="loading === 0">{{endText}}</template>
+        <p v-else-if="loading === 3" @click="(loading = 1) && scroll()">加载失败，点击重试</p>
         <template v-else>
           <svg>
             <use xlink:href="#icon-loading"></use>
@@ -41,188 +41,187 @@
 </template>
 
 <script>
-  function debounce (func, wait, immediate) {
-    var timeout, args, context, timestamp, result
+function debounce (func, wait, immediate) {
+  var timeout, args, context, timestamp, result
 
-    var later = function () {
-      var last = Date.now() - timestamp
+  var later = function () {
+    var last = Date.now() - timestamp
 
-      if (last < wait && last >= 0) {
-        timeout = setTimeout(later, wait - last)
-      } else {
-        timeout = null
-        if (!immediate) {
-          result = func.apply(context, args)
-          if (!timeout) context = args = null
-        }
-      }
-    }
-    return function () {
-      context = this
-      args = arguments
-      timestamp = Date.now()
-      var callnow = immediate && !timeout
-      if (!timeout) timeout = setTimeout(later, wait)
-      if (callnow) {
+    if (last < wait && last >= 0) {
+      timeout = setTimeout(later, wait - last)
+    } else {
+      timeout = null
+      if (!immediate) {
         result = func.apply(context, args)
-        context = args = null
+        if (!timeout) context = args = null
       }
-      return result
     }
   }
+  return function () {
+    context = this
+    args = arguments
+    timestamp = Date.now()
+    var callnow = immediate && !timeout
+    if (!timeout) timeout = setTimeout(later, wait)
+    if (callnow) {
+      result = func.apply(context, args)
+      context = args = null
+    }
+    return result
+  }
+}
 
-  export default {
-    props: {
-      onRefresh: Function,
-      onInfinite: Function,
-      noDataText: {
-        type: String,
-        default: '没有更多数据'
-      },
+export default {
+  props: {
+    onInfinite: Function,
+    onRefresh: Function,
+    endText: {
+      type: String,
+      default: '没有更多数据了'
     },
-    data () {
-      return {
-        loadingState: 1, // 0: stop, 1: loading, 2: stopping loading, 3:loading error
-        beforeDiff: 0,
-        diff: 0,
-        topLoadMethod: false,
-        topBlockHeight: 50,
-        startY: 0,
-        startScrollTop: 0,
-        distance: 0,
-        refreshText: '下拉刷新',
-        triggerDistance: 70,
-        parentnode: false,
-        action: '',
-      }
-    },
-    mounted () {
-      this.scroll()
-      this.topLoadMethod = !!this.onRefresh
-      if (this.topLoadMethod) {
-        this.$refs.box.addEventListener('touchstart', this.touchstart)
-        this.$refs.box.addEventListener('touchmove', this.touchmove)
-        this.$refs.box.addEventListener('touchend', this.touchend)
-      }
-    },
-    methods: {
-      scroll: debounce(function () {
-        if (!this.onInfinite) return
-        var scroller = this.$refs.scroller,
-            loader   = this.$refs.loader
-        if (this.loadingState === 0 || this.loadingState === 2 || this.loadingState === 3) {
-          return
-        }
-        if (scroller.clientHeight > loader.offsetTop) {
-          this.loadingState = 2
-          this.onInfinite(this.finishInfinite)
-          this.scroll()
-        } else {
-          if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
-            this.loadingState = 2
-            this.onInfinite(this.finishInfinite)
-          }
-        }
-      }, 300),
-      finishInfinite (hideSpinner) {
-        let state = 1
-        switch (hideSpinner) {
-          case 'end':
-            state = 0
-            break
-          case 'error':
-            state = 3
-            break
-          default:
-            state = 1
-        }
-        this.loadingState = state
-      },
-      reload () {
-        this.loadingState = 1
-        this.$refs.scroller.scrollTop = 0
+  },
+  data () {
+    return {
+      loading: 1, // 0: ended, 1: loading, 2: stopping loading, 3:loading error
+      refreshable: false,
+      refreshText: '下拉刷新',
+      triggerDistance: 70,
+      topBlockHeight: 50,
+      parentnode: false,
+      startScrollTop: 0,
+      startY: 0,
+      beforeDiff: 0,
+      diff: 0,
+      distance: 0,
+      state: ''
+    }
+  },
+  mounted () {
+    this.scroll()
+    this.refreshable = !!this.onRefresh
+    if (this.refreshable) {
+      this.$refs.box.addEventListener('touchstart', this.touchstart)
+      this.$refs.box.addEventListener('touchmove', this.touchmove)
+      this.$refs.box.addEventListener('touchend', this.touchend)
+    }
+  },
+  methods: {
+    scroll: debounce(function () {
+      if (!this.onInfinite || this.loading !== 1) return
+      var scroller = this.$refs.scroller,
+          loader   = this.$refs.loader
+      // 内容高度 > 加载更多顶部，触发加载事件
+      if (scroller.clientHeight > loader.offsetTop) {
+        console.log('if')
+        this.loading = 2
+        this.onInfinite(this.finishInfinite)
         this.scroll()
-      },
-      scrollTo (y, duration = 200) {
-        this.$refs.box.style.transition = `${duration}ms`
-        this.diff = y
-        setTimeout(() => {
-          this.$refs.box.style.transition = ''
-        }, duration)
-      },
-      findParent (node) {
-        if (node.className.indexOf('no_scroll') > -1) {
-          this.parentnode = true
-        } else {
-          this.parentnode = false
-          if (node.parentNode.nodeName.toLowerCase() != 'body') {
-            this.findParent(node.parentNode)
-          }
+      } else {
+        console.log('else')
+        if ((scroller.scrollTop + scroller.clientHeight - loader.clientHeight) > (loader.offsetTop - 50)) {
+          console.log('else if')
+          this.loading = 2
+          this.onInfinite(this.finishInfinite)
         }
-      },
-      touchstart (event) {
-        this.startY = event.touches[0].clientY
-        this.beforeDiff = this.diff
-        this.startScrollTop = this.$refs.scroller.scrollTop
-        this.action = 'pull'
-        this.refreshText = '下拉刷新'
-        this.topLoadMethod = false
-      },
-      touchmove (event) {
-        this.findParent(event.target)
-        if (this.parentnode) {
-          return
-        }
-        this.currentY = event.touches[0].clientY
-        this.distance = (this.currentY - this.startY) / 2 + this.beforeDiff
-        if (this.startScrollTop < 2 && this.distance > 0) {
-          this.topLoadMethod = true
-          event.preventDefault()
-          event.stopPropagation()
-          this.diff = this.distance
-          if (this.distance > this.triggerDistance) {
-            this.action = 'trigger'
-            this.refreshText = '放手刷新'
-          } else {
-            this.action = 'pull'
-            this.refreshText = '下拉刷新'
-          }
-        }
-      },
-      touchend () {
-        if (this.topLoadMethod) {
-          if (this.diff < this.triggerDistance) {
-            this.scrollTo(0)
-          } else {
-            this.action = 'loading'
-            this.scrollTo(this.topBlockHeight)
-            this.onRefresh(() => {
-              this.refreshText = '加载完成'
-              this.action = 'finish'
-              setTimeout(() => {
-                this.scrollTo(0)
-                this.reload()
-              }, 400)
-
-            })
-            this.refreshText = '加载中...'
-          }
+      }
+    }, 400),
+    finishInfinite (hideSpinner) {
+      let state = 1
+      switch (hideSpinner) {
+        case 'end':
+          state = 0
+          break
+        case 'error':
+          state = 3
+          break
+        default:
+          state = 1
+      }
+      this.loading = state
+    },
+    scrollTo (y, duration = 200) {
+      this.$refs.box.style.transition = `${duration}ms`
+      this.diff = y
+      setTimeout(() => {
+        this.$refs.box.style.transition = ''
+      }, duration)
+    },
+    findParent (node) {
+      if (node.className.indexOf('no_scroll') > -1) {
+        this.parentnode = true
+      } else {
+        this.parentnode = false
+        if (node.parentNode.nodeName.toLowerCase() != 'body') {
+          this.findParent(node.parentNode)
         }
       }
     },
-    computed: {
-      icon () {
-        switch (this.action) {
-          case 'loading':
-          case 'finish':
-            return '#icon-' + this.action
+    touchstart (event) {
+      this.startY = event.touches[0].clientY
+      this.beforeDiff = this.diff
+      this.startScrollTop = this.$refs.scroller.scrollTop
+      this.state = 'pull'
+      this.refreshText = '下拉刷新'
+      this.refreshable = false
+    },
+    touchmove (event) {
+      this.findParent(event.target)
+      if (this.parentnode) {
+        return
+      }
+      this.currentY = event.touches[0].clientY
+      this.distance = (this.currentY - this.startY) / 2 + this.beforeDiff
+      if (this.startScrollTop < 2 && this.distance > 0) {
+        this.refreshable = true
+        event.preventDefault()
+        event.stopPropagation()
+        this.diff = this.distance
+        if (this.distance > this.triggerDistance) {
+          this.state = 'trigger'
+          this.refreshText = '放手刷新'
+        } else {
+          this.state = 'pull'
+          this.refreshText = '下拉刷新'
         }
-        // case 'trigger':
-        // case 'pull':
-        return '#icon-pull'
+      }
+    },
+    touchend () {
+      if (this.refreshable) {
+        if (this.diff < this.triggerDistance) {
+          this.scrollTo(0)
+        } else {
+          this.state = 'loading'
+          this.scrollTo(this.topBlockHeight)
+          this.onRefresh((done) => {
+            this.refreshText = '加载完成'
+            this.state = 'finish'
+            setTimeout(() => {
+              this.scrollTo(0)
+              this.$refs.scroller.scrollTop = 0
+              if (done != 'end') {
+                this.loading = 1
+                this.scroll()
+              }
+            }, 400)
+          })
+          this.refreshText = '加载中...'
+        }
       }
     }
+  },
+  computed: {
+    icon () {
+      switch (this.state) {
+        case 'loading':
+        case 'finish':
+          return '#icon-' + this.state
+      }
+      // case 'trigger':
+      // case 'pull':
+      return '#icon-pull'
+    }
   }
+}
 </script>
 
 <style>
