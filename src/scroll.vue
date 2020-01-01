@@ -131,7 +131,7 @@ export default {
         case 'end':
           state = 0
           break
-        case 'error':
+        case 'err':
           state = 3
           break
         default:
@@ -198,8 +198,8 @@ export default {
             setTimeout(() => {
               this.scrollTo(0)
               this.$refs.scroller.scrollTop = 0
-              if (done != 'end') {
-                this.loading = 1
+              this.finishInfinite(done)
+              if (this.loading == 1) {
                 this.scroll()
               }
             }, 400)

@@ -30,11 +30,7 @@ Vue.use(VuePullInfiniteScroller)
 methods: {
     refresh: function (done) {
         // ajax
-        done();
-    },
-    infinite: function (done) {
-    // ajax
-        
+        // ...
         // success
             // go on
             done()
@@ -42,7 +38,19 @@ methods: {
             done('end')
         
         // error
-        done('error')
+        done('err')
+    },
+    infinite: function (done) {
+        // ajax
+        // ...
+        // success
+            // go on
+            done()
+            // end
+            done('end')
+        
+        // error
+        done('err')
     }
 }
 ```
